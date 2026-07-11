@@ -20,6 +20,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const search = searchParams.get('search') || '';
     const type = searchParams.get('type') || '';
     const location = searchParams.get('location') || '';
+    const postedBy = searchParams.get('postedBy') || '';
     const sort = searchParams.get('sort') || 'newest';
     const page = parseInt(searchParams.get('page') || '1', 10);
 
@@ -31,6 +32,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Build Mongoose query criteria
     const query: any = {};
+
+    if (postedBy) {
+      query.postedBy = postedBy;
+    }
 
     if (search) {
       query.$or = [
