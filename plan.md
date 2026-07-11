@@ -123,13 +123,51 @@ Browser (React components, fetch calls)
   → MongoDB Atlas (users, internships, applications)
   → JSON response + httpOnly cookie sent back to browser
 
-## 7. Authentication Flow (JWT)
-**Register:** POST /api/auth/register (name, email, password) → bcrypt.hash(password) → save User in MongoDB
+## 7. Authentication Flow & Security (JWT)
 
-**Login:** POST /api/auth/login (email, password) → bcrypt.compare() → jwt.sign({ userId }) → set httpOnly cookie
+To ensure production-grade security, the authentication system uses **JWT (JSON Web Tokens)** stored in secure cookies, combined with client-side state management.
 
-**Protected request:** middleware.ts reads cookie on protected routes (/internships/add,
-/internships/manage, /dashboard) → verifies JWT → valid: allow request → invalid: redirect to /login
+### Token & Cookie Strategy
+1. **JWT Payload:** Includes key user claims to minimize database lookup on protected routes:
+   ```ts
+   interface JWTPayload {
+     userId: string;
+     email: string;
+     role: 'student' | 'admin';
+   }
+   ```
+2. **HttpOnly Cookie Configuration:**
+   - `httpOnly: true` (Shields token from XSS/client-side access).
+   - `secure: process.env.NODE_ENV === 'production'` (Transmitted only via HTTPS in production).
+   - `sameSite: 'strict'` (Protects against CSRF attacks).
+   - `maxAge: 86400` (1 day expiration, matching JWT `expiresIn: '1d'`).
+   - `path: '/'` (Available site-wide).
+
+### Authentication Actions
+*   **Registration (`POST /api/auth/register`):**
+    1. Validate input data (valid email format, password min 6 chars).
+    2. Hash password using `bcryptjs` with a salt factor of `12`.
+    3. Save user record. Return user info without password.
+*   **Login (`POST /api/auth/login`):**
+    1. Find user by email (case-insensitive).
+    2. Verify password hash using `bcryptjs.compare()`.
+    3. Generate JWT with payload (id, email, role) signed with `JWT_SECRET`.
+    4. Set token in cookie and return user info. Exposes demo account login.
+*   **Logout (`POST /api/auth/logout`):**
+    1. Clear cookie by setting maxAge to 0.
+*   **Verification (`GET /api/auth/me`):**
+    1. Read token from cookie, verify signature, and return authenticated user object.
+
+### Middleware & Redirection (`middleware.ts`)
+- Runs on protected paths: `/internships/add`, `/internships/manage`, `/dashboard`.
+- Decodes and validates JWT token signature.
+- **Dynamic Redirect:** If verification fails or token is missing, redirect to `/login?redirect=<original-path>` (e.g. `/login?redirect=/dashboard`).
+- After successful login, redirect the user back to the requested page.
+
+### Client-Side State (`context/AuthContext.tsx`)
+- Provides an `AuthProvider` wrapping the application.
+- Exposes `user`, `loading`, `login()`, `logout()`, and `register()` handlers.
+- Queries `/api/auth/me` on initial mount to restore user session.
 
 ## 8. API Endpoint Design
 
