@@ -58,16 +58,41 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       sortObj = { stipend: 1 };
     }
 
+    // Try to get authenticated session to compute skill-match score for listings
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
     // Execute queries in parallel to optimize response time
     const [internships, total] = await Promise.all([
       Internship.find(query).sort(sortObj).skip(skip).limit(limit),
       Internship.countDocuments(query),
     ]);
 
+    // Calculate matchScore for each internship listing if session is active
+    const results = internships.map((internship) => {
+      let matchScore: number | null = null;
+      if (session && session.user && Array.isArray(session.user.skills)) {
+        const userSkills = session.user.skills.map((s: string) => s.trim().toLowerCase());
+        const requiredSkills = internship.requiredSkills.map((s: string) => s.trim().toLowerCase());
+
+        if (requiredSkills.length > 0) {
+          const matched = requiredSkills.filter((s: string) => userSkills.includes(s));
+          matchScore = Math.round((matched.length / requiredSkills.length) * 100);
+        } else {
+          matchScore = 100;
+        }
+      }
+      return {
+        ...internship.toObject(),
+        matchScore,
+      };
+    });
+
     return NextResponse.json({
       success: true,
       data: {
-        internships,
+        internships: results,
         total,
         page,
         pages: Math.ceil(total / limit),
