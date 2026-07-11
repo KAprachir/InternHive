@@ -18,8 +18,10 @@ Two differentiator features beyond a standard listing app (for portfolio strengt
 ## 2. Tech Stack
 - Frontend: Next.js (App Router), React, TypeScript (mandatory), Tailwind CSS, Recharts
 - Backend: Next.js API Routes, TypeScript (mandatory)
-- Database: MongoDB (Mongoose ODM)
-- Auth: JWT (jsonwebtoken) stored in httpOnly cookie, bcryptjs for password hashing
+- Database: MongoDB (native MongoDB driver for the auth adapter; Mongoose for app data —
+  internships, applications)
+- Auth: Better Auth (`better-auth`) with `mongodbAdapter`, email/password enabled,
+  `nextCookies()` plugin for session cookie handling. Replaces custom JWT/bcrypt.
 
 ## 3. Design System
 - Max 3 primary colors + neutral (per assignment rule):
@@ -48,10 +50,7 @@ internhive/
 │   ├── contact/page.tsx
 │   ├── api/
 │   │   ├── auth/
-│   │   │   ├── register/route.ts
-│   │   │   ├── login/route.ts
-│   │   │   ├── logout/route.ts
-│   │   │   └── me/route.ts
+│   │   │   └── [...all]/route.ts   (Better Auth catch-all handler)
 │   │   ├── internships/
 │   │   │   ├── route.ts          (GET all w/ query params, POST create)
 │   │   │   └── [id]/route.ts     (GET one, DELETE — owner only)
@@ -65,28 +64,34 @@ internhive/
 │   ├── InternshipCard.tsx
 │   └── SkeletonCard.tsx
 ├── lib/
-│   ├── dbConnect.ts              (MongoDB connection singleton)
-│   └── auth.ts                   (hashPassword, comparePassword, signToken, verifyToken)
+│   ├── dbConnect.ts              (Mongoose connection singleton, for app data only)
+│   ├── auth.ts                   (Better Auth server config: betterAuth({...}))
+│   └── auth-client.ts            (Better Auth React client: createAuthClient({...}))
 ├── models/
-│   ├── User.ts
 │   ├── Internship.ts
 │   └── Application.ts
+│   (No custom User.ts — Better Auth manages user/session/account collections via
+│    mongodbAdapter. Add skills + role as additionalFields in lib/auth.ts config.)
 ├── types/
 │   └── index.ts                  (shared TS interfaces)
-├── middleware.ts                 (protects /internships/add, /internships/manage, /dashboard)
-└── .env.local                    (MONGODB_URI, JWT_SECRET)
+├── middleware.ts                 (checks Better Auth session cookie for
+│                                   /internships/add, /internships/manage, /dashboard)
+└── .env.local                    (MONGODB_URI, BETTER_AUTH_SECRET, BETTER_AUTH_URL)
 ```
 
 ## 5. Data Models / Types
 
 ```ts
+// User is NOT a custom Mongoose model — it's managed by Better Auth's
+// mongodbAdapter (collections: user, session, account, verification).
+// skills and role are added as additionalFields in the betterAuth() config
+// in lib/auth.ts, so they still appear on the session/user object with types.
 interface User {
   id: string;
   name: string;
   email: string;
-  passwordHash: string;
-  skills: string[];
-  role: "student" | "admin";
+  skills: string[];          // additionalField in Better Auth config
+  role: "student" | "admin"; // additionalField in Better Auth config
 }
 
 interface Internship {
@@ -117,66 +122,68 @@ interface Application {
 - INTERNSHIPS ||--o{ APPLICATIONS : receives
 
 ## 6. Architecture Flow
-Browser (React components, fetch calls)
+Browser (React components, `authClient` calls for auth, plain `fetch` for app data)
   → Next.js pages (App Router: listing, details, dashboard, forms)
-  → Next.js API routes (verify JWT, validate, run logic)
-  → MongoDB Atlas (users, internships, applications)
-  → JSON response + httpOnly cookie sent back to browser
+  → Next.js API routes:
+      - `/api/auth/[...all]` → handled entirely by Better Auth (`toNextJsHandler`)
+      - `/api/internships`, `/api/applications` → custom route handlers, read
+        session via `auth.api.getSession()`, then query Mongoose models
+  → MongoDB Atlas (Better Auth's own collections + internships + applications)
+  → JSON response + session cookie (set automatically by Better Auth's
+    `nextCookies()` plugin) sent back to browser
 
-## 7. Authentication Flow & Security (JWT)
+## 7. Authentication Flow (Better Auth)
+**Setup (lib/auth.ts):**
+```ts
+import { betterAuth } from "better-auth";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { nextCookies } from "better-auth/next-js";
+import { client } from "./mongoClient"; // native MongoDB client, not Mongoose
 
-To ensure production-grade security, the authentication system uses **JWT (JSON Web Tokens)** stored in secure cookies, combined with client-side state management.
+export const auth = betterAuth({
+  database: mongodbAdapter(client.db()),
+  emailAndPassword: { enabled: true },
+  user: {
+    additionalFields: {
+      skills: { type: "string[]", required: false, defaultValue: [] },
+      role: { type: "string", required: false, defaultValue: "student" },
+    },
+  },
+  plugins: [nextCookies()],
+});
+```
 
-### Token & Cookie Strategy
-1. **JWT Payload:** Includes key user claims to minimize database lookup on protected routes:
-   ```ts
-   interface JWTPayload {
-     userId: string;
-     email: string;
-     role: 'student' | 'admin';
-   }
-   ```
-2. **HttpOnly Cookie Configuration:**
-   - `httpOnly: true` (Shields token from XSS/client-side access).
-   - `secure: process.env.NODE_ENV === 'production'` (Transmitted only via HTTPS in production).
-   - `sameSite: 'strict'` (Protects against CSRF attacks).
-   - `maxAge: 86400` (1 day expiration, matching JWT `expiresIn: '1d'`).
-   - `path: '/'` (Available site-wide).
+**Catch-all route (app/api/auth/[...all]/route.ts):**
+```ts
+import { auth } from "@/lib/auth";
+import { toNextJsHandler } from "better-auth/next-js";
+export const { POST, GET } = toNextJsHandler(auth);
+```
 
-### Authentication Actions
-*   **Registration (`POST /api/auth/register`):**
-    1. Validate input data (valid email format, password min 6 chars).
-    2. Hash password using `bcryptjs` with a salt factor of `12`.
-    3. Save user record. Return user info without password.
-*   **Login (`POST /api/auth/login`):**
-    1. Find user by email (case-insensitive).
-    2. Verify password hash using `bcryptjs.compare()`.
-    3. Generate JWT with payload (id, email, role) signed with `JWT_SECRET`.
-    4. Set token in cookie and return user info. Exposes demo account login.
-*   **Logout (`POST /api/auth/logout`):**
-    1. Clear cookie by setting maxAge to 0.
-*   **Verification (`GET /api/auth/me`):**
-    1. Read token from cookie, verify signature, and return authenticated user object.
+**Client (lib/auth-client.ts):**
+```ts
+import { createAuthClient } from "better-auth/react";
+export const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
+});
+```
 
-### Middleware & Redirection (`middleware.ts`)
-- Runs on protected paths: `/internships/add`, `/internships/manage`, `/dashboard`.
-- Decodes and validates JWT token signature.
-- **Dynamic Redirect:** If verification fails or token is missing, redirect to `/login?redirect=<original-path>` (e.g. `/login?redirect=/dashboard`).
-- After successful login, redirect the user back to the requested page.
+**Register/Login (from React components):** `authClient.signUp.email({ name, email, password })`
+and `authClient.signIn.email({ email, password })` — Better Auth handles hashing,
+session creation, and cookie setting internally. No manual bcrypt/JWT code needed.
 
-### Client-Side State (`context/AuthContext.tsx`)
-- Provides an `AuthProvider` wrapping the application.
-- Exposes `user`, `loading`, `login()`, `logout()`, and `register()` handlers.
-- Queries `/api/auth/me` on initial mount to restore user session.
+**Demo login button:** call `authClient.signIn.email({ email: "demo@internhive.com",
+password: "demo1234" })` with a pre-seeded demo account.
+
+**Protected request:** `middleware.ts` (or server components) call
+`auth.api.getSession({ headers })` — valid session: allow; no session: redirect to
+/login. Same pattern replaces the old manual JWT-verify middleware.
 
 ## 8. API Endpoint Design
 
 | Method | Route | Auth? | Purpose |
 |---|---|---|---|
-| POST | /api/auth/register | No | Create user (hash password) |
-| POST | /api/auth/login | No | Verify credentials + set JWT cookie |
-| POST | /api/auth/logout | Yes | Clear cookie |
-| GET | /api/auth/me | Yes | Get logged-in user info |
+| ALL | /api/auth/[...all] | Handled by Better Auth | register, login, logout, session, all auth operations — no custom code needed |
 | GET | /api/internships | No | List all (supports ?search=&type=&location=&sort=&page=) |
 | POST | /api/internships | Yes | Create internship (postedBy = current user) |
 | GET | /api/internships/[id] | No | Single internship + match % (if logged in) |
@@ -242,6 +249,13 @@ applications with status badges.
 - Fully responsive across mobile, tablet, desktop
 - Consistent spacing, alignment, card sizing across the app
 - All buttons and links must be functional
+
+## 11a. Auth Provider Decision
+Using Better Auth instead of hand-rolled JWT/bcrypt. Rationale: Better Auth is
+type-safe out of the box (generates types from the config), handles password
+hashing, session/cookie management, and CSRF protection internally, reducing
+custom security-sensitive code. This also matches prior hands-on experience with
+Better Auth (used previously on the IdeaVault project).
 
 ## 12. Learning Goal (Important Constraint)
 The developer does not know TypeScript yet and is using this project specifically to
