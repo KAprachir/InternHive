@@ -10,6 +10,12 @@ import { client } from './mongoClient';
  */
 export const auth = betterAuth({
   database: mongodbAdapter(client.db()),
+  trustedProxyHeaders: true,
+  trustedOrigins: [
+    'http://localhost:3000',
+    'https://internhive.vercel.app',
+    'https://*.vercel.app',
+  ],
   emailAndPassword: {
     enabled: true,
   },
