@@ -20,6 +20,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const search = searchParams.get('search') || '';
     const type = searchParams.get('type') || '';
     const location = searchParams.get('location') || '';
+    const category = searchParams.get('category') || '';
     const postedBy = searchParams.get('postedBy') || '';
     const sort = searchParams.get('sort') || 'newest';
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -51,6 +52,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (location) {
       query.location = { $regex: location, $options: 'i' };
+    }
+
+    if (category) {
+      query.category = { $regex: category, $options: 'i' };
     }
 
     // Determine Mongoose sort criteria
@@ -134,9 +139,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Read and validate body data
     const body = await request.json();
-    const { title, company, location, type, stipend, requiredSkills, description } = body;
+    const { title, company, location, type, stipend, requiredSkills, description, category, shortDescription, imageUrl } = body;
 
-    if (!title || !company || !location || !type || !description) {
+    if (!title || !company || !location || !type || !description || !category || !shortDescription) {
       return NextResponse.json(
         { success: false, message: 'Please fill in all required fields' },
         { status: 400 }
@@ -156,6 +161,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       stipend: stipend ? Number(stipend) : undefined,
       requiredSkills: Array.isArray(requiredSkills) ? requiredSkills : [],
       description,
+      category,
+      shortDescription,
+      imageUrl,
     });
 
     return NextResponse.json(

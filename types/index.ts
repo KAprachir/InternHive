@@ -17,6 +17,9 @@ export interface Internship {
   stipend?: number;
   requiredSkills: string[];
   description: string;
+  category: string;
+  shortDescription: string;
+  imageUrl?: string;
   postedAt: string;
 }
 

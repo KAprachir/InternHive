@@ -62,6 +62,7 @@ function InternshipsList() {
   const searchVal = searchParams.get('search') || '';
   const typeVal = searchParams.get('type') || '';
   const locationVal = searchParams.get('location') || '';
+  const categoryVal = searchParams.get('category') || '';
   const sortVal = searchParams.get('sort') || 'newest';
   const pageVal = parseInt(searchParams.get('page') || '1', 10);
 
@@ -83,6 +84,7 @@ function InternshipsList() {
           search: searchVal,
           type: typeVal,
           location: locationVal,
+          category: categoryVal,
           sort: sortVal,
           page: pageVal.toString(),
         });
@@ -109,7 +111,7 @@ function InternshipsList() {
     };
 
     fetchInternships();
-  }, [searchVal, typeVal, locationVal, sortVal, pageVal]);
+  }, [searchVal, typeVal, locationVal, categoryVal, sortVal, pageVal]);
 
   /**
    * Updates specific search parameters in the URL, resetting page count.
@@ -185,7 +187,7 @@ function InternshipsList() {
           </button>
         </form>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-2">
           {/* Filter 1: Type */}
           <div>
             <label className="block text-xs font-semibold text-[#1B1B1E] mb-1.5 opacity-85">
@@ -222,6 +224,27 @@ function InternshipsList() {
               <option value="Chattogram">Chattogram</option>
               <option value="Sylhet">Sylhet</option>
               <option value="Gazipur">Gazipur</option>
+            </select>
+          </div>
+
+          {/* Filter 3: Category */}
+          <div>
+            <label className="block text-xs font-semibold text-[#1B1B1E] mb-1.5 opacity-85">
+              Category
+            </label>
+            <select
+              value={categoryVal}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                updateUrlParams({ category: e.target.value })
+              }
+              className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-[#14213D] focus:ring-2 focus:ring-[#14213D] focus:ring-opacity-10 transition duration-200"
+            >
+              <option value="">All Categories</option>
+              <option value="Software Development">Software Development</option>
+              <option value="UI/UX Design">UI/UX Design</option>
+              <option value="Marketing & Growth">Marketing & Growth</option>
+              <option value="Finance & Accounts">Finance & Accounts</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 

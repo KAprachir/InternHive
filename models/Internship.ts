@@ -13,6 +13,9 @@ export interface IInternshipDocument extends Document {
   stipend?: number;
   requiredSkills: string[];
   description: string;
+  category: string;
+  shortDescription: string;
+  imageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +57,22 @@ const InternshipSchema = new Schema<IInternshipDocument>(
     description: {
       type: String,
       required: [true, 'Description is required'],
+    },
+    category: {
+      type: String,
+      required: [true, 'Category is required'],
+      default: 'Software Development',
+      trim: true,
+    },
+    shortDescription: {
+      type: String,
+      required: [true, 'Short description is required'],
+      default: '',
+      trim: true,
+    },
+    imageUrl: {
+      type: String,
+      trim: true,
     },
   },
   {

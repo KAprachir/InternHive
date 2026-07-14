@@ -88,6 +88,14 @@ export default function Navbar() {
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FCA311] rounded-full" />
                   )}
                 </Link>
+                {session.user.role === 'admin' && (
+                  <Link href="/admin" className={linkStyle('/admin')}>
+                    Admin Panel
+                    {isActive('/admin') && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FCA311] rounded-full" />
+                    )}
+                  </Link>
+                )}
                 <Link href="/internships/add" className={linkStyle('/internships/add')}>
                   Add Internship
                   {isActive('/internships/add') && (
@@ -197,6 +205,17 @@ export default function Navbar() {
                 >
                   Dashboard
                 </Link>
+                {session.user.role === 'admin' && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      isActive('/admin') ? 'text-[#FCA311] bg-navy-800' : 'text-white hover:text-[#FCA311]'
+                    }`}
+                  >
+                    Admin Panel
+                  </Link>
+                )}
                 <Link
                   href="/internships/add"
                   onClick={() => setMobileMenuOpen(false)}

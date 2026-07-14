@@ -205,6 +205,25 @@ export default function InternshipDetailPage({ params }: PageProps) {
 
   if (!internship) return null;
 
+  const getFallbackImage = (category: string = ''): string => {
+    const cleanCategory = category.toLowerCase();
+    if (cleanCategory.includes('software') || cleanCategory.includes('dev') || cleanCategory.includes('code')) {
+      return 'https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=1200&q=80';
+    }
+    if (cleanCategory.includes('design') || cleanCategory.includes('ui') || cleanCategory.includes('ux') || cleanCategory.includes('creative')) {
+      return 'https://images.unsplash.com/photo-1561070791-26c113006238?auto=format&fit=crop&w=1200&q=80';
+    }
+    if (cleanCategory.includes('marketing') || cleanCategory.includes('growth') || cleanCategory.includes('social')) {
+      return 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80';
+    }
+    if (cleanCategory.includes('finance') || cleanCategory.includes('account') || cleanCategory.includes('data')) {
+      return 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80';
+    }
+    return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80';
+  };
+
+  const detailImage = internship.imageUrl || getFallbackImage(internship.category);
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 flex flex-col">
       {/* Back Button */}
@@ -223,6 +242,15 @@ export default function InternshipDetailPage({ params }: PageProps) {
         {/* Left Side: Internship Core Content (Col Span 2) */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-[0px_4px_20px_rgba(20,33,61,0.03)] border border-gray-100/50">
+            {/* Image Banner */}
+            <div className="relative h-64 sm:h-80 w-full rounded-2xl overflow-hidden mb-6 bg-gray-100">
+              <img
+                src={detailImage}
+                alt={internship.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
             {/* Header: Company, Title */}
             <div>
               <span className="text-xs font-bold text-[#FCA311] tracking-wider uppercase">
@@ -234,7 +262,7 @@ export default function InternshipDetailPage({ params }: PageProps) {
             </div>
 
             {/* Workplace metadata info grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-4 border-y border-gray-100 text-xs text-[#1B1B1E] opacity-80">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-gray-100 text-xs text-[#1B1B1E] opacity-80">
               <div className="space-y-1">
                 <span className="block text-[10px] text-[#1B1B1E] opacity-50 uppercase tracking-wider">Location</span>
                 <span className="font-semibold">{internship.location}</span>
@@ -243,7 +271,11 @@ export default function InternshipDetailPage({ params }: PageProps) {
                 <span className="block text-[10px] text-[#1B1B1E] opacity-50 uppercase tracking-wider">Workspace Type</span>
                 <span className="font-semibold">{internship.type}</span>
               </div>
-              <div className="space-y-1 col-span-2 sm:col-span-1">
+              <div className="space-y-1">
+                <span className="block text-[10px] text-[#1B1B1E] opacity-50 uppercase tracking-wider">Category</span>
+                <span className="font-semibold">{internship.category || 'Software Development'}</span>
+              </div>
+              <div className="space-y-1">
                 <span className="block text-[10px] text-[#1B1B1E] opacity-50 uppercase tracking-wider">Monthly Stipend</span>
                 <span className="font-semibold">
                   {internship.stipend !== undefined && internship.stipend > 0

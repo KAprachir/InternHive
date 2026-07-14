@@ -16,6 +16,9 @@ const mockFeaturedInternships = [
     stipend: 15000,
     requiredSkills: ['React', 'TypeScript', 'Tailwind CSS'],
     description: 'Collaborate with our engineering team to build next-generation biometric dashboards. Work with React, TypeScript, and modern styling libraries.',
+    category: 'Software Development',
+    shortDescription: 'Build next-generation biometric dashboards with React, TypeScript, and Tailwind CSS.',
+    imageUrl: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80',
   },
   {
     _id: 'intern-2',
@@ -26,6 +29,9 @@ const mockFeaturedInternships = [
     stipend: 12000,
     requiredSkills: ['Figma', 'Prototyping', 'User Research'],
     description: 'Help iterate and design interfaces for our ride-sharing and food delivery platforms. Design interactive layouts and participate in user studies.',
+    category: 'UI/UX Design',
+    shortDescription: 'Help iterate and design user interfaces for ride-sharing and delivery platforms.',
+    imageUrl: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=600&q=80',
   },
   {
     _id: 'intern-3',
@@ -36,6 +42,22 @@ const mockFeaturedInternships = [
     stipend: 18000,
     requiredSkills: ['SQL', 'Python', 'Excel'],
     description: 'Analyze transaction patterns and compile data insights for digital wallet growth. Work closely with product managers to deliver SQL reports.',
+    category: 'Finance & Accounts',
+    shortDescription: 'Analyze transaction patterns and compile insights for mobile digital wallet growth.',
+    imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    _id: 'intern-4',
+    title: 'Digital Marketing Intern',
+    company: 'ShopUp',
+    location: 'Dhaka (Remote)',
+    type: 'Remote' as const,
+    stipend: 10000,
+    requiredSkills: ['SEO', 'Google Ads', 'Content Writing'],
+    description: 'Support our growth marketing campaigns, optimize search keywords, and compose newsletter content for retail business user outreach.',
+    category: 'Marketing & Growth',
+    shortDescription: 'Support search engine optimization, ad campaigns, and newsletters for merchant growth.',
+    imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80',
   },
 ];
 
@@ -149,7 +171,7 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {mockFeaturedInternships.map((internship) => (
               <InternshipCard key={internship._id} internship={internship} matchScore={85} />
             ))}

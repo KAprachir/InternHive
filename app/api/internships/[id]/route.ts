@@ -105,11 +105,11 @@ export async function DELETE(
       );
     }
 
-    // 4. Perform Authorization Check (Ownership Check)
+    // 4. Perform Authorization Check (Ownership Check with Admin Bypass)
     // internship.postedBy is Schema.Types.ObjectId, session.user.id is a string
-    if (internship.postedBy.toString() !== session.user.id) {
+    if (internship.postedBy.toString() !== session.user.id && session.user.role !== 'admin') {
       return NextResponse.json(
-        { success: false, message: 'Forbidden: You do not own this internship listing' },
+        { success: false, message: 'Forbidden: You do not own this internship listing and are not an admin' },
         { status: 403 }
       );
     }

@@ -74,24 +74,24 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <span className="text-sm text-gray-300 cursor-not-allowed hover:text-gray-400">
+                <Link href="/help" className="text-sm text-gray-300 hover:text-[#FCA311] transition duration-200">
                   Help Center
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-sm text-gray-300 cursor-not-allowed hover:text-gray-400">
+                <Link href="/privacy" className="text-sm text-gray-300 hover:text-[#FCA311] transition duration-200">
                   Privacy Policy
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-sm text-gray-300 cursor-not-allowed hover:text-gray-400">
+                <Link href="/terms" className="text-sm text-gray-300 hover:text-[#FCA311] transition duration-200">
                   Terms of Service
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-sm text-gray-300 cursor-not-allowed hover:text-gray-400">
+                <Link href="/internships/manage" className="text-sm text-gray-300 hover:text-[#FCA311] transition duration-200">
                   Employer Portal
-                </span>
+                </Link>
               </li>
             </ul>
           </div>

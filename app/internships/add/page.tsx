@@ -23,6 +23,9 @@ export default function AddInternshipPage() {
   const [stipend, setStipend] = useState<string>('');
   const [skillsInput, setSkillsInput] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  const [category, setCategory] = useState<string>('Software Development');
+  const [shortDescription, setShortDescription] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>('');
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -43,7 +46,7 @@ export default function AddInternshipPage() {
     setError('');
 
     // Input Validation
-    if (!title.trim() || !company.trim() || !location.trim() || !description.trim()) {
+    if (!title.trim() || !company.trim() || !location.trim() || !description.trim() || !shortDescription.trim() || !category.trim()) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -70,6 +73,9 @@ export default function AddInternshipPage() {
           stipend: stipend ? Number(stipend) : undefined,
           requiredSkills,
           description: description.trim(),
+          category,
+          shortDescription: shortDescription.trim(),
+          imageUrl: imageUrl.trim() || undefined,
         }),
       });
 
@@ -179,6 +185,25 @@ export default function AddInternshipPage() {
               </select>
             </div>
 
+            {/* Category */}
+            <div>
+              <label htmlFor="category" className="block text-sm font-semibold text-[#1B1B1E] mb-1">
+                Category <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="category"
+                value={category}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value)}
+                className="block w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14213D] focus:ring-2 focus:ring-[#14213D] focus:ring-opacity-10 transition duration-200"
+              >
+                <option value="Software Development">Software Development</option>
+                <option value="UI/UX Design">UI/UX Design</option>
+                <option value="Marketing & Growth">Marketing & Growth</option>
+                <option value="Finance & Accounts">Finance & Accounts</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
             {/* Location */}
             <div>
               <label htmlFor="location" className="block text-sm font-semibold text-[#1B1B1E] mb-1">
@@ -221,6 +246,38 @@ export default function AddInternshipPage() {
                 value={skillsInput}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSkillsInput(e.target.value)}
                 placeholder="e.g. React, TypeScript, Node.js, SQL"
+                className="block w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14213D] focus:ring-2 focus:ring-[#14213D] focus:ring-opacity-10 transition duration-200"
+              />
+            </div>
+
+            {/* Short Description */}
+            <div className="sm:col-span-2">
+              <label htmlFor="shortDescription" className="block text-sm font-semibold text-[#1B1B1E] mb-1">
+                Short Description <span className="text-red-500">*</span> <span className="text-xs text-gray-400 font-normal">(Brief summary for listing card, max 150 chars)</span>
+              </label>
+              <input
+                id="shortDescription"
+                type="text"
+                required
+                maxLength={150}
+                value={shortDescription}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShortDescription(e.target.value)}
+                placeholder="e.g. Build modern React user interfaces and optimize styling tokens."
+                className="block w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14213D] focus:ring-2 focus:ring-[#14213D] focus:ring-opacity-10 transition duration-200"
+              />
+            </div>
+
+            {/* Optional Image URL */}
+            <div className="sm:col-span-2">
+              <label htmlFor="imageUrl" className="block text-sm font-semibold text-[#1B1B1E] mb-1">
+                Optional Image URL <span className="text-xs text-gray-400 font-normal">(Leave blank to use category fallback placeholder)</span>
+              </label>
+              <input
+                id="imageUrl"
+                type="url"
+                value={imageUrl}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageUrl(e.target.value)}
+                placeholder="e.g. https://images.unsplash.com/... (must be a valid public web link)"
                 className="block w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14213D] focus:ring-2 focus:ring-[#14213D] focus:ring-opacity-10 transition duration-200"
               />
             </div>

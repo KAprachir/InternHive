@@ -46,6 +46,8 @@ internhive/
 │   │   ├── add/page.tsx          (protected)
 │   │   └── manage/page.tsx       (protected — owner only)
 │   ├── dashboard/page.tsx        (protected — application tracker + Recharts)
+│   ├── admin/
+│   │   └── page.tsx              (protected — admin panel dashboard)
 │   ├── about/page.tsx
 │   ├── contact/page.tsx
 │   ├── api/
@@ -53,9 +55,16 @@ internhive/
 │   │   │   └── [...all]/route.ts   (Better Auth catch-all handler)
 │   │   ├── internships/
 │   │   │   ├── route.ts          (GET all w/ query params, POST create)
-│   │   │   └── [id]/route.ts     (GET one, DELETE — owner only)
-│   │   └── applications/
-│   │       └── route.ts          (POST apply, GET by current user)
+│   │   │   └── [id]/route.ts     (GET one, DELETE — owner or admin bypass)
+│   │   ├── applications/
+│   │   │   └── route.ts          (POST apply, GET by current user)
+│   │   └── admin/
+│   │       ├── users/
+│   │       │   └── route.ts      (GET all users, PUT toggle user role)
+│   │       └── applications/
+│   │           ├── route.ts      (GET all applications)
+│   │           └── [id]/
+│   │               └── route.ts  (PUT update application status)
 │   ├── layout.tsx
 │   └── page.tsx                  (landing page)
 ├── components/
@@ -187,9 +196,13 @@ password: "demo1234" })` with a pre-seeded demo account.
 | GET | /api/internships | No | List all (supports ?search=&type=&location=&sort=&page=) |
 | POST | /api/internships | Yes | Create internship (postedBy = current user) |
 | GET | /api/internships/[id] | No | Single internship + match % (if logged in) |
-| DELETE | /api/internships/[id] | Yes (owner only) | Delete own posted internship |
+| DELETE | /api/internships/[id] | Yes (owner or admin) | Delete internship listing (owner or admin bypass) |
 | POST | /api/applications | Yes | Apply to an internship |
 | GET | /api/applications | Yes | Get current user's applications (for dashboard) |
+| GET | /api/admin/users | Yes (admin only) | List all registered users in the database |
+| PUT | /api/admin/users | Yes (admin only) | Update a user's role (with lockout protection) |
+| GET | /api/admin/applications | Yes (admin only) | List all applications, with applicant details |
+| PUT | /api/admin/applications/[id] | Yes (admin only) | Update status of any application |
 
 ### API Response Format (consistent across all endpoints)
 ```ts
@@ -201,9 +214,8 @@ password: "demo1234" })` with a pre-seeded demo account.
 ```
 
 ### Authorization Rule
-DELETE /api/internships/[id] must check both JWT validity AND that
-`internship.postedBy === currentUserId` before allowing deletion — this is an
-authorization check, distinct from authentication.
+DELETE /api/internships/[id] must check that the user is authenticated and that EITHER `internship.postedBy === currentUserId` OR the user's role is `admin` (admin bypass).
+PUT operations in `/api/admin/...` routes must enforce that the caller's session role is `admin`.
 
 ## 9. Skill-Match Score Logic
 ```ts
