@@ -8,6 +8,6 @@ import type { Auth } from './auth';
  * to interact with auth endpoints on the client side.
  */
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
+  baseURL: typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
   plugins: [inferAdditionalFields<Auth>()],
 });
